@@ -11,26 +11,21 @@ const API_BASE = "http://localhost:8081/api";
 
 function showSection(sectionId) {
 
-    // Hide all sections
     document.querySelectorAll(".content-section").forEach(section => {
         section.classList.remove("active");
     });
 
-    // Show selected section
     const selectedSection = document.getElementById(sectionId);
 
     if (selectedSection) {
         selectedSection.classList.add("active");
     }
 
-    // Update sidebar button
     document.querySelectorAll(".menu-btn").forEach(button => {
         button.classList.remove("active");
     });
 
-    const buttons = document.querySelectorAll(".menu-btn");
-
-    buttons.forEach(button => {
+    document.querySelectorAll(".menu-btn").forEach(button => {
 
         if (button.getAttribute("onclick")?.includes(sectionId)) {
             button.classList.add("active");
@@ -38,7 +33,6 @@ function showSection(sectionId) {
 
     });
 
-    // Load data for selected page
     if (sectionId === "dashboard") {
         loadDashboard();
     }
@@ -67,7 +61,13 @@ function showSection(sectionId) {
 
 function showMessage(message) {
 
-    const messageBox = document.getElementById("messageBox");
+    const messageBox =
+        document.getElementById("messageBox");
+
+    if (!messageBox) {
+        alert(message);
+        return;
+    }
 
     messageBox.textContent = message;
 
@@ -133,13 +133,17 @@ async function loadDashboard() {
         ]);
 
 
-        const products = await productsResponse.json();
+        const products =
+            await productsResponse.json();
 
-        const customers = await customersResponse.json();
+        const customers =
+            await customersResponse.json();
 
-        const orders = await ordersResponse.json();
+        const orders =
+            await ordersResponse.json();
 
-        const payments = await paymentsResponse.json();
+        const payments =
+            await paymentsResponse.json();
 
 
         document.getElementById("productCount").textContent =
@@ -157,17 +161,40 @@ async function loadDashboard() {
 
     } catch (error) {
 
-        console.error("Dashboard error:", error);
+        console.error(
+            "Dashboard error:",
+            error
+        );
 
     }
 }
 
 
 // =====================================================
-// PRODUCT SECTION
+// PRODUCT FORM
 // =====================================================
 
 function openProductForm() {
+
+    // Clear old update data
+
+    document.getElementById("productId").value = "";
+
+    document.getElementById("productName").value = "";
+
+    document.getElementById("productPrice").value = "";
+
+    document.getElementById("productStock").value = "";
+
+    document.getElementById("productReorder").value = "";
+
+
+    document.getElementById("productFormTitle").textContent =
+        "Add Product";
+
+    document.getElementById("productSubmitBtn").textContent =
+        "Save Product";
+
 
     document
         .getElementById("productForm")
@@ -194,16 +221,24 @@ async function loadProducts() {
     const tableBody =
         document.getElementById("productTableBody");
 
+
     try {
 
         const response =
             await fetch(`${API_BASE}/products`);
 
+
         if (!response.ok) {
-            throw new Error(await getErrorMessage(response));
+
+            throw new Error(
+                await getErrorMessage(response)
+            );
+
         }
 
-        const products = await response.json();
+
+        const products =
+            await response.json();
 
 
         tableBody.innerHTML = "";
@@ -213,7 +248,7 @@ async function loadProducts() {
 
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="6">
+                    <td colspan="7">
                         No products found.
                     </td>
                 </tr>
@@ -236,7 +271,9 @@ async function loadProducts() {
                     </span>
                 `;
 
-            } else if (
+            }
+
+            else if (
                 product.stockQuantity <= product.reorderLevel
             ) {
 
@@ -246,13 +283,16 @@ async function loadProducts() {
                     </span>
                 `;
 
-            } else {
+            }
+
+            else {
 
                 statusHTML = `
                     <span class="status status-success">
                         Available
                     </span>
                 `;
+
             }
 
 
@@ -260,10 +300,14 @@ async function loadProducts() {
 
                 <tr>
 
-                    <td>${product.id}</td>
+                    <td>
+                        ${product.id}
+                    </td>
 
                     <td>
-                        <strong>${product.name}</strong>
+                        <strong>
+                            ${product.name}
+                        </strong>
                     </td>
 
                     <td>
@@ -282,6 +326,22 @@ async function loadProducts() {
                         ${statusHTML}
                     </td>
 
+                    <td>
+
+                        <button
+                            class="secondary-btn"
+                            onclick="editProduct(${product.id})">
+                            ✏️ Edit
+                        </button>
+
+                        <button
+                            class="secondary-btn"
+                            onclick="deleteProduct(${product.id})">
+                            🗑️ Delete
+                        </button>
+
+                    </td>
+
                 </tr>
 
             `;
@@ -289,22 +349,26 @@ async function loadProducts() {
         });
 
 
-        // Update dashboard count
         document.getElementById("productCount").textContent =
             products.length;
 
 
     } catch (error) {
 
-        console.error("Product error:", error);
+        console.error(
+            "Product error:",
+            error
+        );
+
 
         tableBody.innerHTML = `
             <tr>
-                <td colspan="6">
+                <td colspan="7">
                     Unable to load products.
                 </td>
             </tr>
         `;
+
 
         showMessage(error.message);
 
@@ -313,45 +377,107 @@ async function loadProducts() {
 
 
 // =====================================================
-// ADD PRODUCT
+// ADD / UPDATE PRODUCT
 // =====================================================
 
-async function addProduct(event) {
+async function saveProduct(event) {
 
     event.preventDefault();
+
+
+    const id =
+        document.getElementById("productId").value;
 
 
     const product = {
 
         name:
-            document.getElementById("productName").value.trim(),
+            document
+                .getElementById("productName")
+                .value
+                .trim(),
 
         price:
-            Number(document.getElementById("productPrice").value),
+            Number(
+                document
+                    .getElementById("productPrice")
+                    .value
+            ),
 
         stockQuantity:
-            Number(document.getElementById("productStock").value),
+            Number(
+                document
+                    .getElementById("productStock")
+                    .value
+            ),
 
         reorderLevel:
-            Number(document.getElementById("productReorder").value)
+            Number(
+                document
+                    .getElementById("productReorder")
+                    .value
+            )
 
     };
 
 
     try {
 
-        const response = await fetch(
-            `${API_BASE}/products`,
-            {
-                method: "POST",
+        let response;
 
-                headers: {
-                    "Content-Type": "application/json"
-                },
 
-                body: JSON.stringify(product)
-            }
-        );
+        // =============================================
+        // UPDATE
+        // =============================================
+
+        if (id) {
+
+            response =
+                await fetch(
+                    `${API_BASE}/products/${id}`,
+                    {
+
+                        method: "PUT",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify(product)
+
+                    }
+                );
+
+        }
+
+
+            // =============================================
+            // ADD
+        // =============================================
+
+        else {
+
+            response =
+                await fetch(
+                    `${API_BASE}/products`,
+                    {
+
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify(product)
+
+                    }
+                );
+
+        }
 
 
         if (!response.ok) {
@@ -366,24 +492,53 @@ async function addProduct(event) {
         await response.json();
 
 
-        showMessage("Product added successfully!");
+        if (id) {
+
+            showMessage(
+                "Product updated successfully!"
+            );
+
+        }
+
+        else {
+
+            showMessage(
+                "Product added successfully!"
+            );
+
+        }
 
 
-        document.querySelector("#productForm form").reset();
+        document
+            .querySelector("#productForm form")
+            .reset();
+
+
+        document.getElementById("productId").value = "";
+
+
+        document.getElementById("productFormTitle")
+            .textContent = "Add Product";
+
+
+        document.getElementById("productSubmitBtn")
+            .textContent = "Save Product";
 
 
         closeProductForm();
 
 
-        loadProducts();
+        await loadProducts();
 
-
-        loadDashboard();
+        await loadDashboard();
 
 
     } catch (error) {
 
-        console.error("Add product error:", error);
+        console.error(
+            "Product save error:",
+            error
+        );
 
         showMessage(error.message);
 
@@ -392,10 +547,167 @@ async function addProduct(event) {
 
 
 // =====================================================
-// CUSTOMER SECTION
+// EDIT PRODUCT
+// =====================================================
+
+async function editProduct(id) {
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_BASE}/products/${id}`
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                await getErrorMessage(response)
+            );
+
+        }
+
+
+        const product =
+            await response.json();
+
+
+        document.getElementById("productId").value =
+            product.id;
+
+
+        document.getElementById("productName").value =
+            product.name;
+
+
+        document.getElementById("productPrice").value =
+            product.price;
+
+
+        document.getElementById("productStock").value =
+            product.stockQuantity;
+
+
+        document.getElementById("productReorder").value =
+            product.reorderLevel;
+
+
+        document.getElementById("productFormTitle")
+            .textContent = "Update Product";
+
+
+        document.getElementById("productSubmitBtn")
+            .textContent = "Update Product";
+
+
+        document
+            .getElementById("productForm")
+            .classList.remove("hidden");
+
+
+        document
+            .getElementById("productForm")
+            .scrollIntoView({
+                behavior: "smooth"
+            });
+
+
+    } catch (error) {
+
+        console.error(
+            "Edit product error:",
+            error
+        );
+
+        showMessage(error.message);
+
+    }
+}
+
+
+// =====================================================
+// DELETE PRODUCT
+// =====================================================
+
+async function deleteProduct(id) {
+
+    const confirmed =
+        confirm(
+            "Are you sure you want to delete this product?"
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_BASE}/products/${id}`,
+                {
+                    method: "DELETE"
+                }
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                await getErrorMessage(response)
+            );
+
+        }
+
+
+        showMessage(
+            "Product deleted successfully!"
+        );
+
+
+        await loadProducts();
+
+        await loadDashboard();
+
+
+    } catch (error) {
+
+        console.error(
+            "Delete product error:",
+            error
+        );
+
+        showMessage(error.message);
+
+    }
+}
+
+
+// =====================================================
+// CUSTOMER FORM
 // =====================================================
 
 function openCustomerForm() {
+
+    document.getElementById("customerId").value = "";
+
+    document.getElementById("customerName").value = "";
+
+    document.getElementById("customerEmail").value = "";
+
+    document.getElementById("customerPhone").value = "";
+
+
+    document.getElementById("customerFormTitle")
+        .textContent = "Add Customer";
+
+
+    document.getElementById("customerSubmitBtn")
+        .textContent = "Save Customer";
+
 
     document
         .getElementById("customerForm")
@@ -426,7 +738,9 @@ async function loadCustomers() {
     try {
 
         const response =
-            await fetch(`${API_BASE}/customers`);
+            await fetch(
+                `${API_BASE}/customers`
+            );
 
 
         if (!response.ok) {
@@ -449,7 +763,7 @@ async function loadCustomers() {
 
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="4">
+                    <td colspan="5">
                         No customers found.
                     </td>
                 </tr>
@@ -465,10 +779,14 @@ async function loadCustomers() {
 
                 <tr>
 
-                    <td>${customer.id}</td>
+                    <td>
+                        ${customer.id}
+                    </td>
 
                     <td>
-                        <strong>${customer.name}</strong>
+                        <strong>
+                            ${customer.name}
+                        </strong>
                     </td>
 
                     <td>
@@ -479,6 +797,22 @@ async function loadCustomers() {
                         ${customer.phone}
                     </td>
 
+                    <td>
+
+                        <button
+                            class="secondary-btn"
+                            onclick="editCustomer(${customer.id})">
+                            ✏️ Edit
+                        </button>
+
+                        <button
+                            class="secondary-btn"
+                            onclick="deleteCustomer(${customer.id})">
+                            🗑️ Delete
+                        </button>
+
+                    </td>
+
                 </tr>
 
             `;
@@ -486,18 +820,22 @@ async function loadCustomers() {
         });
 
 
-        document.getElementById("customerCount").textContent =
+        document.getElementById("customerCount")
+            .textContent =
             customers.length;
 
 
     } catch (error) {
 
-        console.error("Customer error:", error);
+        console.error(
+            "Customer error:",
+            error
+        );
 
 
         tableBody.innerHTML = `
             <tr>
-                <td colspan="4">
+                <td colspan="5">
                     Unable to load customers.
                 </td>
             </tr>
@@ -511,42 +849,94 @@ async function loadCustomers() {
 
 
 // =====================================================
-// ADD CUSTOMER
+// ADD / UPDATE CUSTOMER
 // =====================================================
 
-async function addCustomer(event) {
+async function saveCustomer(event) {
 
     event.preventDefault();
+
+
+    const id =
+        document.getElementById("customerId").value;
 
 
     const customer = {
 
         name:
-            document.getElementById("customerName").value.trim(),
+            document
+                .getElementById("customerName")
+                .value
+                .trim(),
 
         email:
-            document.getElementById("customerEmail").value.trim(),
+            document
+                .getElementById("customerEmail")
+                .value
+                .trim(),
 
         phone:
-            document.getElementById("customerPhone").value.trim()
+            document
+                .getElementById("customerPhone")
+                .value
+                .trim()
 
     };
 
 
     try {
 
-        const response = await fetch(
-            `${API_BASE}/customers`,
-            {
-                method: "POST",
+        let response;
 
-                headers: {
-                    "Content-Type": "application/json"
-                },
 
-                body: JSON.stringify(customer)
-            }
-        );
+        // UPDATE
+
+        if (id) {
+
+            response =
+                await fetch(
+                    `${API_BASE}/customers/${id}`,
+                    {
+
+                        method: "PUT",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify(customer)
+
+                    }
+                );
+
+        }
+
+
+        // ADD
+
+        else {
+
+            response =
+                await fetch(
+                    `${API_BASE}/customers`,
+                    {
+
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify(customer)
+
+                    }
+                );
+
+        }
 
 
         if (!response.ok) {
@@ -561,24 +951,189 @@ async function addCustomer(event) {
         await response.json();
 
 
-        showMessage("Customer added successfully!");
+        if (id) {
+
+            showMessage(
+                "Customer updated successfully!"
+            );
+
+        }
+
+        else {
+
+            showMessage(
+                "Customer added successfully!"
+            );
+
+        }
 
 
-        document.querySelector("#customerForm form").reset();
+        document
+            .querySelector("#customerForm form")
+            .reset();
+
+
+        document.getElementById("customerId").value = "";
+
+
+        document.getElementById("customerFormTitle")
+            .textContent = "Add Customer";
+
+
+        document.getElementById("customerSubmitBtn")
+            .textContent = "Save Customer";
 
 
         closeCustomerForm();
 
 
-        loadCustomers();
+        await loadCustomers();
 
-
-        loadDashboard();
+        await loadDashboard();
 
 
     } catch (error) {
 
-        console.error("Add customer error:", error);
+        console.error(
+            "Customer save error:",
+            error
+        );
+
+        showMessage(error.message);
+
+    }
+}
+
+
+// =====================================================
+// EDIT CUSTOMER
+// =====================================================
+
+async function editCustomer(id) {
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_BASE}/customers/${id}`
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                await getErrorMessage(response)
+            );
+
+        }
+
+
+        const customer =
+            await response.json();
+
+
+        document.getElementById("customerId").value =
+            customer.id;
+
+
+        document.getElementById("customerName").value =
+            customer.name;
+
+
+        document.getElementById("customerEmail").value =
+            customer.email;
+
+
+        document.getElementById("customerPhone").value =
+            customer.phone;
+
+
+        document.getElementById("customerFormTitle")
+            .textContent = "Update Customer";
+
+
+        document.getElementById("customerSubmitBtn")
+            .textContent = "Update Customer";
+
+
+        document
+            .getElementById("customerForm")
+            .classList.remove("hidden");
+
+
+        document
+            .getElementById("customerForm")
+            .scrollIntoView({
+                behavior: "smooth"
+            });
+
+
+    } catch (error) {
+
+        console.error(
+            "Edit customer error:",
+            error
+        );
+
+        showMessage(error.message);
+
+    }
+}
+
+
+// =====================================================
+// DELETE CUSTOMER
+// =====================================================
+
+async function deleteCustomer(id) {
+
+    const confirmed =
+        confirm(
+            "Are you sure you want to delete this customer?"
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_BASE}/customers/${id}`,
+                {
+                    method: "DELETE"
+                }
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                await getErrorMessage(response)
+            );
+
+        }
+
+
+        showMessage(
+            "Customer deleted successfully!"
+        );
+
+
+        await loadCustomers();
+
+        await loadDashboard();
+
+
+    } catch (error) {
+
+        console.error(
+            "Delete customer error:",
+            error
+        );
 
         showMessage(error.message);
 
@@ -599,7 +1154,9 @@ async function loadOrders() {
     try {
 
         const response =
-            await fetch(`${API_BASE}/orders`);
+            await fetch(
+                `${API_BASE}/orders`
+            );
 
 
         if (!response.ok) {
@@ -634,19 +1191,25 @@ async function loadOrders() {
 
         orders.forEach(order => {
 
-            let statusClass = "status-info";
+            let statusClass =
+                "status-info";
 
 
             if (order.status === "PAID") {
-                statusClass = "status-success";
+                statusClass =
+                    "status-success";
             }
+
 
             if (order.status === "PLACED") {
-                statusClass = "status-warning";
+                statusClass =
+                    "status-warning";
             }
 
+
             if (order.status === "CANCELLED") {
-                statusClass = "status-danger";
+                statusClass =
+                    "status-danger";
             }
 
 
@@ -657,7 +1220,9 @@ async function loadOrders() {
 
             const orderDate =
                 order.orderDate
-                    ? new Date(order.orderDate).toLocaleString()
+                    ? new Date(
+                        order.orderDate
+                    ).toLocaleString()
                     : "-";
 
 
@@ -665,20 +1230,26 @@ async function loadOrders() {
 
                 <tr>
 
-                    <td>${order.id}</td>
+                    <td>
+                        ${order.id}
+                    </td>
 
                     <td>
                         ${customerName}
                     </td>
 
                     <td>
-                        ₹${Number(order.totalAmount || 0).toFixed(2)}
+                        ₹${Number(
+                order.totalAmount || 0
+            ).toFixed(2)}
                     </td>
 
                     <td>
+
                         <span class="status ${statusClass}">
                             ${order.status || "-"}
                         </span>
+
                     </td>
 
                     <td>
@@ -692,13 +1263,17 @@ async function loadOrders() {
         });
 
 
-        document.getElementById("orderCount").textContent =
+        document.getElementById("orderCount")
+            .textContent =
             orders.length;
 
 
     } catch (error) {
 
-        console.error("Order error:", error);
+        console.error(
+            "Order error:",
+            error
+        );
 
 
         tableBody.innerHTML = `
@@ -729,7 +1304,9 @@ async function loadPayments() {
     try {
 
         const response =
-            await fetch(`${API_BASE}/payments`);
+            await fetch(
+                `${API_BASE}/payments`
+            );
 
 
         if (!response.ok) {
@@ -764,18 +1341,26 @@ async function loadPayments() {
 
         payments.forEach(payment => {
 
-            let statusClass = "status-warning";
+            let statusClass =
+                "status-warning";
 
 
             if (payment.status === "SUCCESS") {
-                statusClass = "status-success";
+
+                statusClass =
+                    "status-success";
+
             }
+
 
             if (
                 payment.status === "FAILED" ||
                 payment.status === "CANCELLED"
             ) {
-                statusClass = "status-danger";
+
+                statusClass =
+                    "status-danger";
+
             }
 
 
@@ -804,7 +1389,9 @@ async function loadPayments() {
                     </td>
 
                     <td>
-                        ₹${Number(payment.amount || 0).toFixed(2)}
+                        ₹${Number(
+                payment.amount || 0
+            ).toFixed(2)}
                     </td>
 
                     <td>
@@ -812,9 +1399,11 @@ async function loadPayments() {
                     </td>
 
                     <td>
+
                         <span class="status ${statusClass}">
                             ${payment.status || "-"}
                         </span>
+
                     </td>
 
                     <td>
@@ -828,13 +1417,17 @@ async function loadPayments() {
         });
 
 
-        document.getElementById("paymentCount").textContent =
+        document.getElementById("paymentCount")
+            .textContent =
             payments.length;
 
 
     } catch (error) {
 
-        console.error("Payment error:", error);
+        console.error(
+            "Payment error:",
+            error
+        );
 
 
         tableBody.innerHTML = `
@@ -885,13 +1478,17 @@ async function createBill(event) {
 
     const productId =
         Number(
-            document.getElementById("billProductId").value
+            document
+                .getElementById("billProductId")
+                .value
         );
 
 
     const quantity =
         Number(
-            document.getElementById("billQuantity").value
+            document
+                .getElementById("billQuantity")
+                .value
         );
 
 
@@ -911,18 +1508,23 @@ async function createBill(event) {
 
     try {
 
-        const response = await fetch(
-            `${API_BASE}/billing`,
-            {
-                method: "POST",
+        const response =
+            await fetch(
+                `${API_BASE}/billing`,
+                {
 
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                    method: "POST",
 
-                body: JSON.stringify(billRequest)
-            }
-        );
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify(billRequest)
+
+                }
+            );
 
 
         if (!response.ok) {
@@ -943,21 +1545,25 @@ async function createBill(event) {
         );
 
 
-        document.querySelector("#billingForm form").reset();
+        document
+            .querySelector("#billingForm form")
+            .reset();
 
 
         closeBillingForm();
 
 
-        loadProducts();
+        await loadProducts();
 
-
-        loadDashboard();
+        await loadDashboard();
 
 
     } catch (error) {
 
-        console.error("Billing error:", error);
+        console.error(
+            "Billing error:",
+            error
+        );
 
         showMessage(error.message);
 
@@ -969,10 +1575,13 @@ async function createBill(event) {
 // INITIAL PAGE LOAD
 // =====================================================
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
 
-    loadDashboard();
+        loadDashboard();
 
-    loadProducts();
+        loadProducts();
 
-});
+    }
+);
